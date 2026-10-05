@@ -16,15 +16,18 @@ Das Script bietet anschließend:
 
 - **In Zwischenablage kopieren** für den direkten Quizlet-Import
 - **TXT herunterladen** als UTF-8-Datei
+- **Beispielsätze mit exportieren** als optionale Checkbox (standardmäßig aus)
 - eine Vollständigkeitsprüfung wie `Gefunden: 143 / 143 Karten`
 
-## Update auf 1.1.1
+## Update auf 1.1.2
 
-Die neue Version unterstützt den geänderten Kartei-Titel ohne `itemprop`-Attribut. Auf schmalen Bildschirmen steht der Export-Button unter dem Titel, damit er nicht aus der Toolbar herausgeschoben wird.
+Die neue Version exportiert standardmäßig nur den eigentlichen Kartentext. Die von Card2Brain ergänzten Beispielsätze lassen sich im Exportdialog mit **Beispielsätze mit exportieren** hinzuschalten. Änderungen wirken sofort auf Kopieren und TXT-Download, auch wenn die Karten bereits geladen sind; ein erneutes Laden ist nicht nötig. Die Option gilt für den geöffneten Dialog und ist nach einem Neuladen der Seite wieder aus.
+
+Seit 1.1.1 unterstützt das Script den geänderten Kartei-Titel ohne `itemprop`-Attribut. Auf schmalen Bildschirmen steht der Export-Button unter dem Titel, damit er nicht aus der Toolbar herausgeschoben wird.
 
 Installierte Scripts können über Tampermonkeys Update-Prüfung aktualisiert werden. Die `@updateURL` und `@downloadURL` zeigen auf die aktuelle Datei im `main`-Branch. Alternativ erneut auf **[Userscript installieren / aktualisieren](https://raw.githubusercontent.com/rafaelreverberi/card2brain-quizlet-exporter/main/card2brain-to-quizlet.user.js)** klicken und das Update bestätigen.
 
-Die versionierte Datei ist auch im **[Release v1.1.1](https://github.com/rafaelreverberi/card2brain-quizlet-exporter/releases/tag/v1.1.1)** verfügbar. Nach dem Update die Kartei neu laden.
+Die versionierte Datei ist auch im **[Release v1.1.2](https://github.com/rafaelreverberi/card2brain-quizlet-exporter/releases/tag/v1.1.2)** verfügbar. Nach dem Update die Kartei neu laden.
 
 Am 05.10.2026 wurde die öffentliche Verben-Kartei erneut im Browser geprüft: 143 / 143 Karten geladen und als TXT heruntergeladen. Eine Installation in einem bestehenden Tampermonkey-Profil war nicht Teil dieses Tests.
 
@@ -65,10 +68,11 @@ Bei der 143-Karten-Testkartei wurden zusätzlich geprüft:
 ## Entwicklung
 
 ```bash
+npm ci
 npm test
 ```
 
-Der Test prüft JavaScript-Syntax, Userscript-Metadaten, minimale Berechtigungen und die sicherheitskritische Vollständigkeitslogik.
+Die Tests prüfen JavaScript-Syntax, Userscript-Metadaten, minimale Berechtigungen, die Vollständigkeitslogik und die Textausgabe mit und ohne Beispielsätze. Die Testbibliothek ist nur eine Entwicklungsabhängigkeit; das Userscript selbst bleibt ohne Abhängigkeiten.
 
 ## Lizenz
 

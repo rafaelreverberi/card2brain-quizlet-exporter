@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Card2Brain → Quizlet Export
 // @namespace    https://github.com/rafaelreverberi/card2brain-quizlet-exporter
-// @version      1.1.1
+// @version      1.1.2
 // @description  Exportiert alle Lernkarten einer Card2Brain-Kartei vollständig für Quizlet.
 // @match        https://card2brain.ch/*
 // @homepageURL  https://github.com/rafaelreverberi/card2brain-quizlet-exporter
@@ -96,9 +96,21 @@
         return readMetadataFromDocument(parseHtml(html), alias);
     }
 
-    function readableText(element) {
+    function readableText(element, includeExamples = false) {
         if (!element) return '';
         const clone = element.cloneNode(true);
+        // Card2Brain marks its generated example sentences with an AI logo.
+        // Change only that sentence block, preserving ordinary formatted content.
+        clone.querySelectorAll('img[alt="AI Logo"]').forEach(img => {
+            const example = img.closest('div.d-flex.align-items-center');
+            if (!example || !clone.contains(example)) return;
+            if (includeExamples) {
+                example.prepend('\n');
+                example.append('\n');
+            } else {
+                example.remove();
+            }
+        });
         clone.querySelectorAll('script, style, button, audio, video, img[alt="AI Logo"]').forEach(node => node.remove());
         clone.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
         clone.querySelectorAll('img[alt]').forEach(img => img.replaceWith(img.getAttribute('alt') || ''));
@@ -123,12 +135,20 @@
         }
         // The front also contains viewer controls and keyboard hints. The semantic
         // section inside each side is the actual learning-card content.
-        const term = readableText(card.querySelector('.flip-card-front section'));
-        const definition = readableText(card.querySelector('.flip-card-back section'));
+        const front = card.querySelector('.flip-card-front section');
+        const back = card.querySelector('.flip-card-back section');
+        const term = readableText(front);
+        const definition = readableText(back);
         if (!term || !definition) {
             throw new Error(`Karte ${expectedIndex + 1} enthält keinen vollständig exportierbaren Text.`);
         }
-        return { index: expectedIndex, term, definition };
+        return {
+            index: expectedIndex,
+            term,
+            definition,
+            termWithExamples: readableText(front, true),
+            definitionWithExamples: readableText(back, true),
+        };
     }
 
     function cardUrl(metadata, index) {
@@ -175,8 +195,20 @@
         return cards;
     }
 
-    function createQuizletExport(cards) {
-        return cards.map(card => `${card.term}\t${card.definition}`).join('\n');
+    function createQuizletExport(cards, includeExamples = false) {
+        return cards.map(card => {
+            const term = includeExamples ? card.termWithExamples : card.term;
+            const definition = includeExamples ? card.definitionWithExamples : card.definition;
+            return `${term}\t${definition}`;
+        }).join('\n');
+    }
+
+    function updateExportOptions() {
+        if (!activeExport) return;
+        const includeExamples = document.getElementById(`${SCRIPT_ID}-examples`).checked;
+        activeExport.text = createQuizletExport(activeExport.cards, includeExamples);
+        setFeedback('success', `Gefunden: ${activeExport.cards.length} / ${activeExport.metadata.total} Karten`
+            + (includeExamples ? ' · Mit Beispielsätzen' : ' · Ohne Beispielsätze'));
     }
 
     function slugify(value) {
@@ -206,6 +238,10 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schliessen"></button>
                     </div>
                     <div class="modal-body">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="${SCRIPT_ID}-examples">
+                            <label class="form-check-label" for="${SCRIPT_ID}-examples">Beispielsätze mit exportieren</label>
+                        </div>
                         <p id="${SCRIPT_ID}-status" class="mb-2">Bereit.</p>
                         <div id="${SCRIPT_ID}-progress-wrap" class="progress mb-3" role="progressbar" aria-valuemin="0" aria-valuemax="100">
                             <div id="${SCRIPT_ID}-progress" class="progress-bar" style="width: 0%"></div>
@@ -224,6 +260,7 @@
                 </div>
             </div>`;
         document.body.appendChild(dialog);
+        dialog.querySelector(`#${SCRIPT_ID}-examples`).addEventListener('change', updateExportOptions);
         dialog.querySelector(`#${SCRIPT_ID}-copy`).addEventListener('click', copyExport);
         dialog.querySelector(`#${SCRIPT_ID}-download`).addEventListener('click', downloadExport);
         dialog.querySelector('.btn-close').addEventListener('click', () => {
@@ -286,7 +323,7 @@
                 filename: `${slugify(metadata.title)}-quizlet.txt`,
             };
             document.getElementById(`${SCRIPT_ID}-status`).textContent = `${cards.length} Karten gefunden`;
-            setFeedback('success', `Gefunden: ${cards.length} / ${metadata.total} Karten`);
+            updateExportOptions();
             document.getElementById(`${SCRIPT_ID}-copy`).disabled = false;
             document.getElementById(`${SCRIPT_ID}-download`).disabled = false;
         } catch (error) {

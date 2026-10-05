@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here.
 
+## [1.1.2] - 2026-10-05
+
+### Added
+
+- Checkbox „Beispielsätze mit exportieren“ im Exportdialog, standardmäßig ausgeschaltet.
+- Änderungen der Option aktualisieren Zwischenablage- und TXT-Ausgabe ohne erneutes Laden der Karten.
+- Regressionstests für beide Varianten, normale formatierte Inhalte und die Kartenindex-Prüfung.
+
+### Verified
+
+- Öffentliche Verben-Kartei: beide Exportvarianten mit je 143 / 143 Karten im Browser heruntergeladen.
+
 ## [1.1.1] - 2026-10-05
 
 ### Fixed

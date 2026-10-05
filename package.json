@@ -1,10 +1,13 @@
 {
   "name": "card2brain-quizlet-exporter",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "private": true,
   "description": "Tampermonkey userscript that exports complete Card2Brain boxes to Quizlet.",
   "scripts": {
-    "test": "node --check card2brain-to-quizlet.user.js && node scripts/validate-userscript.mjs"
+    "test": "node --check card2brain-to-quizlet.user.js && node scripts/validate-userscript.mjs && node scripts/test-export.mjs"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "linkedom": "^0.18.13"
+  }
 }

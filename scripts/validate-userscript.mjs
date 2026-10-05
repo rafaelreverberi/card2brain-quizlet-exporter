@@ -10,7 +10,7 @@ assert.doesNotMatch(metadata, /@connect\b/);
 assert.doesNotMatch(source, /google-analytics|googletagmanager|segment\.com|mixpanel/i);
 assert.match(source, /const MAX_ATTEMPTS = 3/);
 assert.match(source, /actualIndex - 1 !== expectedIndex/);
-assert.match(source, /cards\.map\(card => `\$\{card\.term\}\\t\$\{card\.definition\}`\)/);
+assert.match(source, /return `\$\{term\}\\t\$\{definition\}`/);
 assert.match(source, /Export wurde aus Sicherheitsgründen nicht erstellt/);
 
 console.log('Userscript metadata and fail-closed export checks: PASS');
