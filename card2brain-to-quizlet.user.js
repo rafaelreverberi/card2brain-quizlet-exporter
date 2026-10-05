@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Card2Brain → Quizlet Export
 // @namespace    https://github.com/rafaelreverberi/card2brain-quizlet-exporter
-// @version      1.1.0
+// @version      1.1.1
 // @description  Exportiert alle Lernkarten einer Card2Brain-Kartei vollständig für Quizlet.
 // @match        https://card2brain.ch/*
 // @homepageURL  https://github.com/rafaelreverberi/card2brain-quizlet-exporter
@@ -22,6 +22,7 @@
     let activeBoxAlias = null;
     let activeExport = null;
     let modalInstance = null;
+    let exportRunning = false;
 
     function detectCurrentBox() {
         const match = location.pathname.match(/^\/box\/([^/]+)\/?$/);
@@ -44,18 +45,22 @@
     function readMetadataFromDocument(doc, alias) {
         const carousel = doc.querySelector('#flip-mode-carousel[data-max]');
         const total = positiveInteger(carousel?.getAttribute('data-max'));
-        const title = doc.querySelector('#box[itemprop="name"]')?.textContent?.trim()
+        const title = doc.querySelector('h1#box, #box[itemprop="name"]')?.textContent?.trim()
             || doc.querySelector('h1')?.textContent?.trim()
             || alias;
         const endpoint = carousel?.getAttribute('data-url');
         if (!total || !endpoint) {
             throw new Error('Die Gesamtzahl oder der Karten-Endpunkt konnte nicht ermittelt werden.');
         }
+        const endpointUrl = new URL(endpoint, canonicalBoxUrl(alias));
+        if (endpointUrl.origin !== location.origin) {
+            throw new Error('Der Karten-Endpunkt gehört nicht zur aktuellen Card2Brain-Domain.');
+        }
         return {
             alias,
             title,
             total,
-            endpoint: new URL(endpoint, canonicalBoxUrl(alias)).href,
+            endpoint: endpointUrl.href,
         };
     }
 
@@ -94,7 +99,7 @@
     function readableText(element) {
         if (!element) return '';
         const clone = element.cloneNode(true);
-        clone.querySelectorAll('script, style, button, audio, video').forEach(node => node.remove());
+        clone.querySelectorAll('script, style, button, audio, video, img[alt="AI Logo"]').forEach(node => node.remove());
         clone.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
         clone.querySelectorAll('img[alt]').forEach(img => img.replaceWith(img.getAttribute('alt') || ''));
         return (clone.textContent || '')
@@ -221,6 +226,14 @@
         document.body.appendChild(dialog);
         dialog.querySelector(`#${SCRIPT_ID}-copy`).addEventListener('click', copyExport);
         dialog.querySelector(`#${SCRIPT_ID}-download`).addEventListener('click', downloadExport);
+        dialog.querySelector('.btn-close').addEventListener('click', () => {
+            if (modalInstance) modalInstance.hide();
+            else {
+                dialog.classList.remove('show');
+                dialog.style.display = 'none';
+                dialog.setAttribute('aria-hidden', 'true');
+            }
+        });
         return dialog;
     }
 
@@ -255,6 +268,8 @@
         const alias = detectCurrentBox();
         if (!alias) return;
         showDialog();
+        if (exportRunning) return;
+        exportRunning = true;
         activeExport = null;
         document.getElementById(`${SCRIPT_ID}-copy`).disabled = true;
         document.getElementById(`${SCRIPT_ID}-download`).disabled = true;
@@ -277,6 +292,8 @@
         } catch (error) {
             document.getElementById(`${SCRIPT_ID}-status`).textContent = 'Export fehlgeschlagen';
             setFeedback('danger', error?.message || String(error));
+        } finally {
+            exportRunning = false;
         }
     }
 
@@ -331,7 +348,7 @@
         }
         if (document.querySelector('[data-c2b-quizlet-export]')) return;
 
-        const heading = document.querySelector('#box[itemprop="name"]');
+        const heading = document.querySelector('h1#box, #box[itemprop="name"]');
         const profileHeader = heading?.closest('.c2b-profile-header');
         const learnGroup = profileHeader?.querySelector('.btn-group[role="group"]');
         if (learnGroup) {
@@ -341,11 +358,20 @@
             );
         }
 
-        const mobileLearn = profileHeader?.querySelector('a.d-lg-none.btn.btn-info');
-        if (mobileLearn) {
-            mobileLearn.insertAdjacentElement(
+        // The mobile toolbar does not wrap; give the export its own title row.
+        if (learnGroup && heading) {
+            heading.insertAdjacentElement(
                 'afterend',
-                makeButton('btn btn-info btn-sm d-lg-none d-inline-flex align-items-center ms-2'),
+                makeButton('btn btn-info btn-sm d-lg-none d-inline-flex align-items-center mt-3'),
+            );
+        }
+
+        // Keep the action available if Card2Brain changes its toolbar again.
+        // A separate row below the title also avoids crowding narrow headers.
+        if (!document.querySelector('[data-c2b-quizlet-export]') && heading) {
+            heading.insertAdjacentElement(
+                'afterend',
+                makeButton('btn btn-info btn-sm d-inline-flex align-items-center my-2'),
             );
         }
     }

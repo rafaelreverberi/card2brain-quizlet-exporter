@@ -18,6 +18,16 @@ Das Script bietet anschließend:
 - **TXT herunterladen** als UTF-8-Datei
 - eine Vollständigkeitsprüfung wie `Gefunden: 143 / 143 Karten`
 
+## Update auf 1.1.1
+
+Die neue Version unterstützt den geänderten Kartei-Titel ohne `itemprop`-Attribut. Auf schmalen Bildschirmen steht der Export-Button unter dem Titel, damit er nicht aus der Toolbar herausgeschoben wird.
+
+Installierte Scripts können über Tampermonkeys Update-Prüfung aktualisiert werden. Die `@updateURL` und `@downloadURL` zeigen auf die aktuelle Datei im `main`-Branch. Alternativ erneut auf **[Userscript installieren / aktualisieren](https://raw.githubusercontent.com/rafaelreverberi/card2brain-quizlet-exporter/main/card2brain-to-quizlet.user.js)** klicken und das Update bestätigen.
+
+Die versionierte Datei ist auch im **[Release v1.1.1](https://github.com/rafaelreverberi/card2brain-quizlet-exporter/releases/tag/v1.1.1)** verfügbar. Nach dem Update die Kartei neu laden.
+
+Am 05.10.2026 wurde die öffentliche Verben-Kartei erneut im Browser geprüft: 143 / 143 Karten geladen und als TXT heruntergeladen. Eine Installation in einem bestehenden Tampermonkey-Profil war nicht Teil dieses Tests.
+
 ## Warum werden wirklich alle Karten geladen?
 
 Card2Brain zeigt in seiner Listenansicht nur einen Teil einer Kartei. Der integrierte Flip-Viewer kann jedoch jede Kartenposition über einen internen, gleich-originigen Endpunkt laden. Das Script liest zuerst Card2Brains gemeldete Gesamtzahl und ruft dann jede Position von `0` bis `Gesamtzahl − 1` ab.
